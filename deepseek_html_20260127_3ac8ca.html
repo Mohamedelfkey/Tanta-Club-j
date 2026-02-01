@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التطبيق الاحترافي</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase 8.x (compatible with Realtime Database) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f9fafb;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* شاشة التحميل */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* بطاقات المصادقة */
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            border: none;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .auth-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .auth-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* حقول الإدخال */
+        .form-control-lg {
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .form-control-lg:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.15);
+        }
+        
+        /* الأزرار */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+        }
+        
+        .btn-lg {
+            font-size: 1.1rem;
+        }
+        img {color: rgb(22, 23, 23);
+        border: 4px solid #00000
+        width: 20%;
+        flex-direction: column;
+        border-radius: 60px;
+    }
+        
+        /* بطاقة الاشتراك */
+        .subscription-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* بطاقة الملف الشخصي */
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* عناصر القائمة */
+        .menu-item {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .menu-item:hover {
+            border-color: var(--primary-color);
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* القائمة السفلية */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 0.75rem;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-icon.active {
+            color: var(--primary-color);
+            transform: translateY(-5px);
+        }
+        
+        .nav-text {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* عداد الأيام */
+        .countdown-timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        
+        /* شريط التقدم */
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .progress-bar {
+            border-radius: 5px;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+        }
+        
+        /* الرسوم المتحركة */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* متجاوب */
+        @media (max-width: 768px) {
+            .auth-card {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .bottom-nav {
+                padding: 0.5rem;
+            }
+            
+            .nav-text {
+                font-size: 0.7rem;
+            }
+            
+            .subscription-card, .profile-card {
+                padding: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .auth-card {
+                padding: 1rem;
+            }
+            
+            .form-control-lg {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* الصور الدائرية */
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* العلامات */
+        .badge {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        /* الأقسام */
+        .section-title {
+            border-right: 4px solid var(--primary-color);
+            padding-right: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* الكروت */
+        .feature-card {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* الروابط */
+        .text-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .text-link:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+        
+        /* المسافات */
+        .min-vh-100 {
+            min-height: 100vh;
+        }
+        
+        /* التنبيهات */
+        .alert {
+            border-radius: 12px;
+            border: none;
+        }
+        
+        /* أيقونات */
+        .icon-wrapper {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .icon-primary {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+        }
+        
+        /* Shadow utilities */
+        .shadow-soft {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* إصلاح الـ Z-index للقوائم المنسدلة */
+        .dropdown-menu {
+            z-index: 1001 !important;
+        }
+        
+        /* إصلاح الـ Z-index للشريط العلوي */
+        .sticky-top {
+            z-index: 1000 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- شاشة التحميل -->
+    <div id="loadingScreen">
+        <div class="text-center">
+            <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <h4 class="mt-4 text-primary fw-bold">جاري تحميل التطبيق...</h4>
+            <p class="text-muted mt-2">يرجى الانتظار قليلاً</p>
+        </div>
+    </div>
+    
+    <!-- المحتوى الرئيسي -->
+    <div id="mainContent" style="display: none;"></div>
+
+    <!-- Application Script -->
+    <script>
+        // ============================================
+        // Firebase Configuration
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDA4Ii-SO2EHXIJiG8OS5dfMwHZFiaHa7E",
+            authDomain: "tanta-culb.firebaseapp.com",
+            databaseURL: "https://tanta-culb-default-rtdb.firebaseio.com",
+            projectId: "tanta-culb",
+            storageBucket: "tanta-culb.firebasestorage.app",
+            messagingSenderId: "654631109715",
+            appId: "1:654631109715:web:e67fb0256879ef56c3f2a6",
+            measurementId: "G-PL85LCQM8D"
+        };
+        
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+        
+        // ============================================
+        // إدارة المستخدمين والبيانات
+        // ============================================
+        
+        // مفتاح التخزين المحلي للمستخدم الحالي
+        const CURRENT_USER_KEY = 'professional_app_current_user';
+        
+        // متغيرات عامة
+        let currentUser = null;
+        let userData = null;
+        
+        // ============================================
+        // دوال إدارة البيانات مع Firebase Realtime Database
+        // ============================================
+        
+        // التحقق من حالة تسجيل الدخول
+        function checkAuthState() {
+            // تحميل المستخدم الحالي من LocalStorage
+            const currentUserJson = localStorage.getItem(CURRENT_USER_KEY);
+            if (currentUserJson) {
+                currentUser = JSON.parse(currentUserJson);
+                userData = currentUser;
+                console.log("User logged in:", currentUser.userId);
+                
+                // تحميل أحدث بيانات المستخدم من Firebase
+                loadUserFromFirebase(currentUser.userId).then(() => {
+                    showDashboard();
+                }).catch((error) => {
+                    console.error("Error loading user from Firebase:", error);
+                    showLoginPage();
+                });
+            } else {
+                console.log("No user logged in");
+                showLoginPage();
+            }
+        }
+        
+        // تحميل بيانات المستخدم من Firebase
+        async function loadUserFromFirebase(userId) {
+            return new Promise((resolve, reject) => {
+                database.ref('users/' + userId).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const user = snapshot.val();
+                            currentUser = user;
+                            userData = user;
+                            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+                            console.log("User loaded from Firebase:", userId);
+                            resolve(user);
+                        } else {
+                            reject(new Error("المستخدم غير موجود في قاعدة البيانات"));
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error loading user:", error);
+                        reject(error);
+                    });
+            });
+        }
+        
+        // تسجيل الدخول
+        function loginUser(userId, password) {
+            return new Promise((resolve, reject) => {
+                database.ref('users/' + userId).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const user = snapshot.val();
+                            
+                            // التحقق من كلمة المرور
+                            if (user.password === password) {
+                                // تحديث آخر دخول
+                                const updates = {
+                                    lastLogin: new Date().toISOString(),
+                                    loginCount: (user.loginCount || 0) + 1,
+                                    'stats/lastActive': new Date().toISOString(),
+                                    'system/lastUpdated': new Date().toISOString()
+                                };
+                                
+                                database.ref('users/' + userId).update(updates)
+                                    .then(() => {
+                                        // تحديث بيانات المستخدم المحلية
+                                        user.lastLogin = updates.lastLogin;
+                                        user.loginCount = updates.loginCount;
+                                        
+                                        if (!user.stats) user.stats = {};
+                                        user.stats.lastActive = updates['stats/lastActive'];
+                                        if (!user.stats.totalLogins) user.stats.totalLogins = 0;
+                                        user.stats.totalLogins = (user.stats.totalLogins || 0) + 1;
+                                        
+                                        if (!user.system) user.system = {};
+                                        user.system.lastUpdated = updates['system/lastUpdated'];
+                                        
+                                        // حفظ المستخدم الحالي
+                                        currentUser = user;
+                                        userData = user;
+                                        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+                                        
+                                        console.log("Login successful for user:", user.userId);
+                                        resolve(user);
+                                    })
+                                    .catch((error) => {
+                                        console.error("Error updating login info:", error);
+                                        reject(new Error("حدث خطأ أثناء تسجيل الدخول"));
+                                    });
+                            } else {
+                                console.log("Login failed: wrong password");
+                                reject(new Error("كلمة المرور غير صحيحة"));
+                            }
+                        } else {
+                            console.log("Login failed: user not found");
+                            reject(new Error("اسم المستخدم غير موجود"));
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error checking user:", error);
+                        reject(new Error("حدث خطأ في الاتصال بالخادم"));
+                    });
+            });
+        }
+        
+        // إنشاء حساب جديد
+        function createUser(userId, email, password) {
+            return new Promise((resolve, reject) => {
+                // التحقق من عدم تكرار اسم المستخدم
+                database.ref('users/' + userId).once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            reject(new Error("اسم المستخدم موجود بالفعل"));
+                            return;
+                        }
+                        
+                        // التحقق من عدم تكرار البريد الإلكتروني
+                        database.ref('users').orderByChild('email').equalTo(email).once('value')
+                            .then((emailSnapshot) => {
+                                if (emailSnapshot.exists()) {
+                                    reject(new Error("البريد الإلكتروني مستخدم بالفعل"));
+                                    return;
+                                }
+                                
+                                // إنشاء بيانات المستخدم الجديد
+                                const newUser = {
+                                    userId: userId,
+                                    email: email,
+                                    password: password,
+                                    createdAt: new Date().toISOString(),
+                                    lastLogin: new Date().toISOString(),
+                                    loginCount: 1,
+                                    rememberMe: false,
+                                    
+                                    // البيانات الشخصية
+                                    profile: {
+                                        name: '',
+                                        phone: '',
+                                        address: '',
+                                        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(userId)}&background=2563eb&color=fff&size=150`
+                                    },
+                                    
+                                    // حالة الاشتراك
+                                    subscription: {
+                                        status: 'free',
+                                        plan: 'basic',
+                                        startDate: new Date().toISOString(),
+                                        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                                        daysRemaining: 30,
+                                        autoRenew: false
+                                    },
+                                    
+                                    // الإعدادات
+                                    settings: {
+                                        notifications: true,
+                                        theme: 'light',
+                                        language: 'ar',
+                                        privacy: 'public'
+                                    },
+                                    
+                                    // الإحصائيات
+                                    stats: {
+                                        totalLogins: 1,
+                                        lastActive: new Date().toISOString(),
+                                        devices: []
+                                    },
+                                    
+                                    // معلومات النظام
+                                    system: {
+                                        isActive: true,
+                                        isVerified: false,
+                                        lastUpdated: new Date().toISOString()
+                                    }
+                                };
+                                
+                                // حفظ المستخدم الجديد في Firebase
+                                database.ref('users/' + userId).set(newUser)
+                                    .then(() => {
+                                        // تسجيل الدخول تلقائياً
+                                        currentUser = newUser;
+                                        userData = newUser;
+                                        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
+                                        
+                                        console.log("User created successfully in Firebase:", userId);
+                                        resolve(newUser);
+                                    })
+                                    .catch((error) => {
+                                        console.error("Error creating user in Firebase:", error);
+                                        reject(new Error("حدث خطأ أثناء إنشاء الحساب"));
+                                    });
+                            })
+                            .catch((error) => {
+                                console.error("Error checking email:", error);
+                                reject(new Error("حدث خطأ في التحقق من البريد الإلكتروني"));
+                            });
+                    })
+                    .catch((error) => {
+                        console.error("Error checking username:", error);
+                        reject(new Error("حدث خطأ في التحقق من اسم المستخدم"));
+                    });
+            });
+        }
+        
+        // تسجيل الخروج
+        function logoutUser() {
+            currentUser = null;
+            userData = null;
+            localStorage.removeItem(CURRENT_USER_KEY);
+            console.log("User logged out");
+            showLoginPage();
+        }
+        
+        // تحديث بيانات المستخدم
+        function updateUserProfile(data) {
+            return new Promise((resolve, reject) => {
+                if (!currentUser || !currentUser.userId) {
+                    reject(new Error("لم يتم تسجيل الدخول"));
+                    return;
+                }
+                
+                const updates = {
+                    'system/lastUpdated': new Date().toISOString()
+                };
+                
+                // تحديث البيانات الشخصية
+                if (data.name !== undefined) updates['profile/name'] = data.name;
+                if (data.phone !== undefined) updates['profile/phone'] = data.phone;
+                if (data.address !== undefined) updates['profile/address'] = data.address;
+                if (data.avatarUrl !== undefined) updates['profile/avatarUrl'] = data.avatarUrl;
+                
+                database.ref('users/' + currentUser.userId).update(updates)
+                    .then(() => {
+                        // تحديث البيانات المحلية
+                        if (!userData.profile) userData.profile = {};
+                        if (data.name !== undefined) userData.profile.name = data.name;
+                        if (data.phone !== undefined) userData.profile.phone = data.phone;
+                        if (data.address !== undefined) userData.profile.address = data.address;
+                        if (data.avatarUrl !== undefined) userData.profile.avatarUrl = data.avatarUrl;
+                        
+                        if (!userData.system) userData.system = {};
+                        userData.system.lastUpdated = updates['system/lastUpdated'];
+                        
+                        // تحديث LocalStorage
+                        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
+                        
+                        console.log("Profile updated successfully in Firebase");
+                        resolve(userData);
+                    })
+                    .catch((error) => {
+                        console.error("Error updating profile in Firebase:", error);
+                        reject(new Error("حدث خطأ أثناء حفظ التغييرات"));
+                    });
+            });
+        }
+        
+        // تحديث حالة الاشتراك
+        function updateSubscription(subscriptionData) {
+            return new Promise((resolve, reject) => {
+                if (!currentUser || !currentUser.userId) {
+                    reject(new Error("لم يتم تسجيل الدخول"));
+                    return;
+                }
+                
+                const updates = {
+                    'system/lastUpdated': new Date().toISOString()
+                };
+                
+                // تحديث بيانات الاشتراك
+                if (subscriptionData.status !== undefined) updates['subscription/status'] = subscriptionData.status;
+                if (subscriptionData.plan !== undefined) updates['subscription/plan'] = subscriptionData.plan;
+                if (subscriptionData.startDate !== undefined) updates['subscription/startDate'] = subscriptionData.startDate;
+                if (subscriptionData.endDate !== undefined) updates['subscription/endDate'] = subscriptionData.endDate;
+                if (subscriptionData.daysRemaining !== undefined) updates['subscription/daysRemaining'] = subscriptionData.daysRemaining;
+                if (subscriptionData.autoRenew !== undefined) updates['subscription/autoRenew'] = subscriptionData.autoRenew;
+                
+                database.ref('users/' + currentUser.userId).update(updates)
+                    .then(() => {
+                        // تحديث البيانات المحلية
+                        if (!userData.subscription) userData.subscription = {};
+                        if (subscriptionData.status !== undefined) userData.subscription.status = subscriptionData.status;
+                        if (subscriptionData.plan !== undefined) userData.subscription.plan = subscriptionData.plan;
+                        if (subscriptionData.startDate !== undefined) userData.subscription.startDate = subscriptionData.startDate;
+                        if (subscriptionData.endDate !== undefined) userData.subscription.endDate = subscriptionData.endDate;
+                        if (subscriptionData.daysRemaining !== undefined) userData.subscription.daysRemaining = subscriptionData.daysRemaining;
+                        if (subscriptionData.autoRenew !== undefined) userData.subscription.autoRenew = subscriptionData.autoRenew;
+                        
+                        if (!userData.system) userData.system = {};
+                        userData.system.lastUpdated = updates['system/lastUpdated'];
+                        
+                        // تحديث LocalStorage
+                        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
+                        
+                        console.log("Subscription updated successfully in Firebase");
+                        resolve(userData);
+                    })
+                    .catch((error) => {
+                        console.error("Error updating subscription in Firebase:", error);
+                        reject(new Error("حدث خطأ أثناء تحديث الاشتراك"));
+                    });
+            });
+        }
+        
+        // التحقق من صحة البريد الإلكتروني
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        // التحقق من قوة كلمة المرور
+        function validatePassword(password) {
+            return password.length >= 6;
+        }
+        
+        // عداد تنازلي للاشتراك
+        function updateSubscriptionCountdown() {
+            if (!userData || !userData.subscription) return;
+            
+            const endDate = new Date(userData.subscription.endDate);
+            const now = new Date();
+            const diffTime = endDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            userData.subscription.daysRemaining = diffDays > 0 ? diffDays : 0;
+        }
+        
+        // ============================================
+        // عرض الصفحات
+        // ============================================
+        
+        // عرض صفحة تسجيل الدخول
+        function showLoginPage() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="auth-page">
+                    <div class="container">
+                        <div class="row justify-content-center align-items-center">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="auth-card animate-fadeIn">
+                                    <div class="text-center mb-4">
+                                        <div >
+                                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgnNygTZ3RXEhSt1P1GnFKDa9gZVylgMp_YvyQBWR2ONfzIPvgv0yNkfi6W_TfrsXLN5ig8piNT_JWcLeQx4xDFsEDFRAK9Ii7zQ7ju8-DY4yjhQSrTTag3MYh6KAABHOiOq81-t9TeZ2JvuZR7ng2rbqqgmgxhvGMCjvKc6FZud6iL53WCep7bcex_Itoi/s259/images.png" alt="o">
+
+                                        </div>
+                                        <h3 class="fw-bold text-primary">تسجيل الدخول</h3>
+                                        <p class="text-muted">أدخل بياناتك للوصول إلى حسابك</p>
+                                    </div>
+                                    
+                                    <div id="alertContainer"></div>
+                                    
+                                    <form id="loginForm" novalidate>
+                                        <div class="mb-3">
+                                            <label for="loginIdentifier" class="form-label fw-bold">
+                                                <i class="fas fa-user me-2 text-primary"></i>اسم المستخدم
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control form-control-lg" 
+                                                   id="loginIdentifier" 
+                                                   name="identifier"
+                                                   placeholder="أدخل اسم المستخدم"
+                                                   required>
+                                            <div class="invalid-feedback">يرجى إدخال اسم المستخدم</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="loginPassword" class="form-label fw-bold">
+                                                <i class="fas fa-lock me-2 text-primary"></i>كلمة المرور
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="password" 
+                                                       class="form-control form-control-lg" 
+                                                       id="loginPassword" 
+                                                       name="password"
+                                                       placeholder="أدخل كلمة المرور"
+                                                       required>
+                                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="invalid-feedback">يرجى إدخال كلمة المرور</div>
+                                        </div>
+                                        
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" id="rememberMe" name="remember">
+                                            <label class="form-check-label" for="rememberMe">تذكرني على هذا الجهاز</label>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-3" id="loginBtn">
+                                            <span id="loginText">تسجيل الدخول</span>
+                                            <span id="loginSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                                        </button>
+                                        
+                                        <div class="text-center">
+                                            <a href="#" onclick="showRegisterPage()" class="text-link">ليس لديك حساب؟ سجل الآن</a>
+                                        </div>
+                                    </form>
+                                    
+                                    <div class="text-center mt-4 pt-3 border-top">
+                                        <small class="text-muted">
+                                            بالضغط على "تسجيل الدخول" فإنك توافق على 
+                                            <a href="#" class="text-link">شروط الخدمة</a> و
+                                            <a href="#" class="text-link">سياسة الخصوصية</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                const passwordInput = document.getElementById('loginPassword');
+                const icon = this.querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+            
+            hideLoadingScreen();
+        }
+        
+        // عرض صفحة التسجيل
+        function showRegisterPage() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="auth-page">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8 col-lg-6">
+                                <div class="auth-card animate-fadeIn">
+                                    <div class="text-center mb-4">
+                                        <div class="icon-wrapper icon-primary mx-auto">
+                                            <i class="fas fa-user-plus fa-3x"></i>
+                                        </div>
+                                        <h3 class="fw-bold text-primary">إنشاء حساب جديد</h3>
+                                        <p class="text-muted">املأ النموذج أدناه لإنشاء حسابك</p>
+                                    </div>
+                                    
+                                    <div id="alertContainer"></div>
+                                    
+                                    <form id="registerForm" novalidate>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="userId" class="form-label fw-bold">
+                                                    <i class="fas fa-id-card me-2 text-primary"></i>اسم المستخدم
+                                                </label>
+                                                <input type="text" 
+                                                       class="form-control form-control-lg" 
+                                                       id="userId" 
+                                                       name="userId"
+                                                       placeholder="اختر اسم مستخدم"
+                                                       required>
+                                                <div class="invalid-feedback">يرجى إدخال اسم مستخدم صحيح</div>
+                                                <small class="form-text text-muted">سيتم استخدامه لتسجيل الدخول</small>
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label for="registerEmail" class="form-label fw-bold">
+                                                    <i class="fas fa-envelope me-2 text-primary"></i>البريد الإلكتروني
+                                                </label>
+                                                <input type="email" 
+                                                       class="form-control form-control-lg" 
+                                                       id="registerEmail" 
+                                                       name="email"
+                                                       placeholder="أدخل بريدك الإلكتروني"
+                                                       required>
+                                                <div class="invalid-feedback">يرجى إدخال بريد إلكتروني صحيح</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="registerPassword" class="form-label fw-bold">
+                                                    <i class="fas fa-lock me-2 text-primary"></i>كلمة المرور
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="password" 
+                                                           class="form-control form-control-lg" 
+                                                           id="registerPassword" 
+                                                           name="password"
+                                                           placeholder="أنشئ كلمة مرور (6 أحرف على الأقل)"
+                                                           required>
+                                                    <button class="btn btn-outline-secondary" type="button" id="toggleRegisterPassword">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="invalid-feedback">كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل</div>
+                                                <small class="form-text text-muted" id="passwordStrength"></small>
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label for="confirmPassword" class="form-label fw-bold">
+                                                    <i class="fas fa-lock me-2 text-primary"></i>تأكيد كلمة المرور
+                                                </label>
+                                                <input type="password" 
+                                                       class="form-control form-control-lg" 
+                                                       id="confirmPassword" 
+                                                       name="confirmPassword"
+                                                       placeholder="أعد إدخال كلمة المرور"
+                                                       required>
+                                                <div class="invalid-feedback">كلمة المرور غير متطابقة</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" id="privacyPolicy" name="privacyPolicy" required>
+                                            <label class="form-check-label" for="privacyPolicy">
+                                                أوافق على <a href="#" class="text-link">شروط الخدمة</a> و 
+                                                <a href="#" class="text-link">سياسة الخصوصية</a>
+                                            </label>
+                                            <div class="invalid-feedback">يجب الموافقة على سياسة الخصوصية</div>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-3" id="registerBtn">
+                                            <span id="registerText">إنشاء الحساب</span>
+                                            <span id="registerSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                                        </button>
+                                        
+                                        <div class="text-center">
+                                            <a href="#" onclick="showLoginPage()" class="text-link">لديك حساب بالفعل؟ سجل الدخول</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            document.getElementById('registerPassword').addEventListener('input', function() {
+                const password = this.value;
+                const strengthText = document.getElementById('passwordStrength');
+                
+                if (password.length === 0) {
+                    strengthText.textContent = '';
+                    strengthText.className = 'form-text text-muted';
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    strengthText.textContent = 'كلمة مرور قصيرة (6 أحرف على الأقل)';
+                    strengthText.className = 'form-text text-danger';
+                } else if (password.length < 8) {
+                    strengthText.textContent = 'كلمة مرور متوسطة';
+                    strengthText.className = 'form-text text-warning';
+                } else {
+                    strengthText.textContent = 'كلمة مرور قوية ✓';
+                    strengthText.className = 'form-text text-success';
+                }
+            });
+            
+            document.getElementById('toggleRegisterPassword').addEventListener('click', function() {
+                const passwordInput = document.getElementById('registerPassword');
+                const icon = this.querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+            
+            hideLoadingScreen();
+        }
+        
+        // عرض لوحة التحكم
+        function showDashboard() {
+            if (!currentUser || !userData) {
+                console.log("No user data, redirecting to login");
+                return showLoginPage();
+            }
+            
+            // تحديث عداد الاشتراك
+            updateSubscriptionCountdown();
+            
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="pb-5">
+                    <!-- شريط التنقل العلوي -->
+                    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+                        <div class="container-fluid">
+                            <a class="navbar-brand fw-bold text-primary" href="#" onclick="showDashboard()">
+                                <i class="fas fa-rocket me-2"></i>التطبيق الاحترافي
+                            </a>
+                            
+                            <div class="d-flex align-items-center">
+                                <div class="dropdown me-3">
+                                    <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button" id="userMenu" data-bs-toggle="dropdown">
+                                        <img src="${userData.profile?.avatarUrl || 'https://ui-avatars.com/api/?name=م&background=2563eb&color=fff&size=32'}" 
+                                             class="rounded-circle me-2" 
+                                             width="32" 
+                                             height="32"
+                                             alt="صورة المستخدم">
+                                        ${userData.userId || 'المستخدم'}
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#" onclick="showProfilePage()"><i class="fas fa-user me-2"></i>الملف الشخصي</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="showSubscriptionPage()"><i class="fas fa-crown me-2"></i>الاشتراك</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="logoutUser()"><i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                    
+                    <!-- المحتوى الرئيسي -->
+                    <div class="container mt-4">
+                        <!-- ترحيب -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-soft">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h4 class="card-title fw-bold text-primary">
+                                                    <i class="fas fa-home me-2"></i>مرحباً، ${userData.userId || 'عزيزي المستخدم'}!
+                                                </h4>
+                                                <p class="card-text text-muted mb-0">
+                                                    <i class="fas fa-calendar-day me-1"></i>
+                                                    ${new Date().toLocaleDateString('ar-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                    <span class="mx-2">•</span>
+                                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                                    آخر دخول: ${userData.lastLogin ? new Date(userData.lastLogin).toLocaleDateString('ar-AR') : 'اليوم'}
+                                                </p>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge ${userData.subscription?.status === 'premium' ? 'bg-warning' : 'bg-secondary'} fs-6">
+                                                    ${userData.subscription?.status === 'premium' ? 'مميز' : 'مجاني'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- بطاقة الاشتراك -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="subscription-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <h3 class="fw-bold">حالة الاشتراك</h3>
+                                            <p class="mb-1">
+                                                <i class="fas fa-calendar-alt me-2"></i>
+                                                تاريخ الانتهاء: ${userData.subscription?.endDate ? new Date(userData.subscription.endDate).toLocaleDateString('ar-AR') : 'غير محدد'}
+                                            </p>
+                                            <p class="mb-0">
+                                                <i class="fas fa-clock me-2"></i>
+                                                الأيام المتبقية: 
+                                                <span id="daysRemaining" class="fw-bold fs-3">${userData.subscription?.daysRemaining || 0}</span> يوم
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-light text-dark fs-5 p-2">
+                                                ${userData.subscription?.status === 'premium' ? 'مميز' : 'مجاني'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <div class="progress mb-3" style="height: 12px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: ${Math.min(100, (30 - (userData.subscription?.daysRemaining || 0)) / 30 * 100)}%">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-light">
+                                            <small>بداية الاشتراك</small>
+                                            <small>نهاية الاشتراك</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-center mt-4">
+                                        <button class="btn btn-light btn-lg px-5 fw-bold" onclick="showSubscriptionPage()">
+                                            <i class="fas fa-sync-alt me-2"></i>تجديد الاشتراك
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات الحساب -->
+                        <h5 class="section-title fw-bold mt-5 mb-4">معلومات الحساب</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-0 shadow-soft h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="icon-wrapper icon-primary me-3">
+                                                <i class="fas fa-user-circle"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-0">معلومات الدخول</h6>
+                                                <p class="text-muted mb-0">بيانات تسجيل الدخول</p>
+                                            </div>
+                                        </div>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-user me-2 text-muted"></i> اسم المستخدم: ${userData.userId || 'غير محدد'}</li>
+                                            <li class="mb-2"><i class="fas fa-envelope me-2 text-muted"></i> البريد: ${userData.email || 'غير محدد'}</li>
+                                            <li class="mb-2"><i class="fas fa-calendar-plus me-2 text-muted"></i> تاريخ الإنشاء: ${userData.createdAt ? new Date(userData.createdAt).toLocaleDateString('ar-AR') : 'غير محدد'}</li>
+                                            <li class="mb-0"><i class="fas fa-sign-in-alt me-2 text-muted"></i> مرات الدخول: ${userData.loginCount || 1}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-0 shadow-soft h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="icon-wrapper icon-success me-3">
+                                                <i class="fas fa-chart-line"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-0">إحصائيات</h6>
+                                                <p class="text-muted mb-0">نشاط الحساب</p>
+                                            </div>
+                                        </div>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-check-circle me-2 text-muted"></i> الحالة: ${userData.system?.isActive ? 'نشط' : 'غير نشط'}</li>
+                                            <li class="mb-2"><i class="fas fa-shield-alt me-2 text-muted"></i> التحقق: ${userData.system?.isVerified ? 'مؤكد' : 'غير مؤكد'}</li>
+                                            <li class="mb-2"><i class="fas fa-clock me-2 text-muted"></i> آخر تحديث: ${userData.system?.lastUpdated ? new Date(userData.system.lastUpdated).toLocaleDateString('ar-AR') : 'غير محدد'}</li>
+                                            <li class="mb-0"><i class="fas fa-mobile-alt me-2 text-muted"></i> الأجهزة: ${userData.stats?.devices?.length || 0} جهاز</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- الميزات السريعة -->
+                        <h5 class="section-title fw-bold mt-5 mb-4">الميزات السريعة</h5>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="card feature-card border-0 shadow-soft h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="icon-wrapper icon-primary mx-auto mb-3">
+                                            <i class="fas fa-user-edit fa-2x"></i>
+                                        </div>
+                                        <h6 class="card-title fw-bold">الملف الشخصي</h6>
+                                        <p class="card-text text-muted small">تعديل معلوماتك الشخصية</p>
+                                        <a href="#" onclick="showProfilePage()" class="btn btn-outline-primary btn-sm">فتح</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="card feature-card border-0 shadow-soft h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="icon-wrapper icon-warning mx-auto mb-3">
+                                            <i class="fas fa-crown fa-2x"></i>
+                                        </div>
+                                        <h6 class="card-title fw-bold">الاشتراك</h6>
+                                        <p class="card-text text-muted small">إدارة وتجديد الاشتراك</p>
+                                        <a href="#" onclick="showSubscriptionPage()" class="btn btn-outline-warning btn-sm">فتح</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="card feature-card border-0 shadow-soft h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="icon-wrapper icon-success mx-auto mb-3">
+                                            <i class="fas fa-cog fa-2x"></i>
+                                        </div>
+                                        <h6 class="card-title fw-bold">الإعدادات</h6>
+                                        <p class="card-text text-muted small">تعديل إعدادات الحساب</p>
+                                        <a href="#" onclick="showSettingsPage()" class="btn btn-outline-success btn-sm">فتح</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="card feature-card border-0 shadow-soft h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="icon-wrapper icon-danger mx-auto mb-3">
+                                            <i class="fas fa-question-circle fa-2x"></i>
+                                        </div>
+                                        <h6 class="card-title fw-bold">المساعدة</h6>
+                                        <p class="card-text text-muted small">الدعم الفني والمساعدة</p>
+                                        <a href="#" onclick="showHelpPage()" class="btn btn-outline-danger btn-sm">فتح</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- القائمة السفلية -->
+                    <div class="bottom-nav">
+                        <div class="container">
+                            <div class="row justify-content-around text-center">
+                                <div class="col">
+                                    <a href="#" onclick="showDashboard()" class="text-decoration-none">
+                                        <div class="nav-icon active">
+                                            <i class="fas fa-home"></i>
+                                            <div class="nav-text">الرئيسية</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showProfilePage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-user"></i>
+                                            <div class="nav-text">الملف</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showNotificationsPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-bell"></i>
+                                            <div class="nav-text">الإشعارات</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showSearchPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-search"></i>
+                                            <div class="nav-text">بحث</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showMenuPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-bars"></i>
+                                            <div class="nav-text">القائمة</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            hideLoadingScreen();
+        }
+        
+        // عرض صفحة الملف الشخصي
+        function showProfilePage() {
+            if (!currentUser || !userData) return showLoginPage();
+            
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="pb-5">
+                    <!-- شريط التنقل العلوي -->
+                    <nav class="navbar navbar-light bg-white shadow-sm">
+                        <div class="container-fluid">
+                            <button class="btn btn-outline-primary" onclick="showDashboard()">
+                                <i class="fas fa-arrow-right me-2"></i>العودة
+                            </button>
+                            <span class="navbar-brand fw-bold text-primary">الملف الشخصي</span>
+                        </div>
+                    </nav>
+                    
+                    <div class="container mt-4">
+                        <!-- صورة الملف الشخصي -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="text-center">
+                                    <div class="position-relative d-inline-block">
+                                        <img src="${userData.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.userId)}&background=2563eb&color=fff&size=150`}" 
+                                             class="avatar-circle" 
+                                             alt="صورة الملف الشخصي">
+                                        <button class="btn btn-primary btn-sm rounded-circle position-absolute" 
+                                                style="bottom: 10px; right: 10px; width: 40px; height: 40px;"
+                                                onclick="changeAvatar()">
+                                            <i class="fas fa-camera"></i>
+                                        </button>
+                                    </div>
+                                    <h3 class="mt-3 fw-bold">${userData.profile?.name || userData.userId}</h3>
+                                    <p class="text-muted">${userData.email}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات الحساب -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="profile-card">
+                                    <h5 class="fw-bold mb-4 text-primary">
+                                        <i class="fas fa-info-circle me-2"></i>معلومات الحساب
+                                    </h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted fw-bold">اسم المستخدم</label>
+                                            <div class="form-control bg-light py-3">${userData.userId}</div>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted fw-bold">البريد الإلكتروني</label>
+                                            <div class="form-control bg-light py-3">${userData.email}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted fw-bold">تاريخ الإنشاء</label>
+                                            <div class="form-control bg-light py-3">
+                                                ${userData.createdAt ? new Date(userData.createdAt).toLocaleDateString('ar-AR') : 'غير محدد'}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted fw-bold">آخر دخول</label>
+                                            <div class="form-control bg-light py-3">
+                                                ${userData.lastLogin ? new Date(userData.lastLogin).toLocaleDateString('ar-AR') : 'اليوم'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- معلومات شخصية -->
+                                    <h6 class="fw-bold mt-4 mb-3 text-primary">معلومات شخصية</h6>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="profileName" class="form-label">الاسم الكامل</label>
+                                            <input type="text" class="form-control" id="profileName" 
+                                                   value="${userData.profile?.name || ''}" 
+                                                   placeholder="أدخل اسمك الكامل">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="profilePhone" class="form-label">رقم الهاتف</label>
+                                            <input type="tel" class="form-control" id="profilePhone" 
+                                                   value="${userData.profile?.phone || ''}" 
+                                                   placeholder="أدخل رقم الهاتف">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <label for="profileAddress" class="form-label">العنوان</label>
+                                            <textarea class="form-control" id="profileAddress" rows="3" 
+                                                      placeholder="أدخل عنوانك">${userData.profile?.address || ''}</textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- معلومات تسجيل الدخول -->
+                                    <h6 class="fw-bold mt-4 mb-3 text-primary">إحصائيات الدخول</h6>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">إجمالي مرات الدخول</label>
+                                            <div class="form-control bg-light py-3">
+                                                ${userData.stats?.totalLogins || userData.loginCount || 1} مرة
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">تذكرني مفعل</label>
+                                            <div class="form-control bg-light py-3">
+                                                ${userData.rememberMe ? 'نعم' : 'لا'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-center mt-4 pt-3 border-top">
+                                        <button class="btn btn-primary btn-lg px-5" onclick="saveProfile()">
+                                            <i class="fas fa-save me-2"></i>حفظ التغييرات
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- القائمة السفلية -->
+                    <div class="bottom-nav">
+                        <div class="container">
+                            <div class="row justify-content-around text-center">
+                                <div class="col">
+                                    <a href="#" onclick="showDashboard()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-home"></i>
+                                            <div class="nav-text">الرئيسية</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showProfilePage()" class="text-decoration-none">
+                                        <div class="nav-icon active">
+                                            <i class="fas fa-user"></i>
+                                            <div class="nav-text">الملف</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showNotificationsPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-bell"></i>
+                                            <div class="nav-text">الإشعارات</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showSearchPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-search"></i>
+                                            <div class="nav-text">بحث</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showMenuPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-bars"></i>
+                                            <div class="nav-text">القائمة</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            hideLoadingScreen();
+        }
+        
+        // ============================================
+        // دوال المساعدة
+        // ============================================
+        
+        function showAlert(message, type = 'danger') {
+            const alertContainer = document.getElementById('alertContainer');
+            if (!alertContainer) return;
+            
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2"></i>
+                        <div>${message}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+        
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const identifier = form.identifier.value;
+            const password = form.password.value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            
+            if (!identifier) {
+                showAlert('يرجى إدخال اسم المستخدم');
+                return;
+            }
+            
+            if (!password) {
+                showAlert('يرجى إدخال كلمة المرور');
+                return;
+            }
+            
+            loginText.classList.add('d-none');
+            loginSpinner.classList.remove('d-none');
+            loginBtn.disabled = true;
+            
+            console.log("Attempting login for:", identifier);
+            
+            // تأخير لمحاكاة اتصال الشبكة
+            setTimeout(() => {
+                loginUser(identifier, password)
+                    .then((user) => {
+                        console.log("Login successful for user:", user.userId);
+                        showAlert('تم تسجيل الدخول بنجاح!', 'success');
+                        
+                        // تأخير قصير قبل الانتقال للوحة التحكم
+                        setTimeout(() => {
+                            showDashboard();
+                        }, 1000);
+                    })
+                    .catch((error) => {
+                        loginText.classList.remove('d-none');
+                        loginSpinner.classList.add('d-none');
+                        loginBtn.disabled = false;
+                        
+                        console.error("Login failed:", error.message);
+                        showAlert(error.message || 'بيانات الدخول غير صحيحة');
+                    });
+            }, 500);
+        }
+        
+        function handleRegister(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const userId = form.userId.value;
+            const email = form.email.value;
+            const password = form.password.value;
+            const confirmPassword = form.confirmPassword.value;
+            const privacyPolicy = form.privacyPolicy.checked;
+            const registerBtn = document.getElementById('registerBtn');
+            const registerText = document.getElementById('registerText');
+            const registerSpinner = document.getElementById('registerSpinner');
+            
+            if (!userId || userId.length < 3) {
+                showAlert('اسم المستخدم يجب أن يكون 3 أحرف على الأقل');
+                return;
+            }
+            
+            if (!validateEmail(email)) {
+                showAlert('يرجى إدخال بريد إلكتروني صحيح');
+                return;
+            }
+            
+            if (!validatePassword(password)) {
+                showAlert('كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showAlert('كلمات المرور غير متطابقة');
+                return;
+            }
+            
+            if (!privacyPolicy) {
+                showAlert('يجب الموافقة على سياسة الخصوصية');
+                return;
+            }
+            
+            registerText.classList.add('d-none');
+            registerSpinner.classList.remove('d-none');
+            registerBtn.disabled = true;
+            
+            console.log("Attempting to create user:", userId);
+            
+            // تأخير لمحاكاة اتصال الشبكة
+            setTimeout(() => {
+                createUser(userId, email, password)
+                    .then((user) => {
+                        console.log("User created successfully:", user.userId);
+                        showAlert('تم إنشاء الحساب بنجاح!', 'success');
+                        
+                        // تأخير قصير قبل الانتقال للوحة التحكم
+                        setTimeout(() => {
+                            showDashboard();
+                        }, 1000);
+                    })
+                    .catch((error) => {
+                        registerText.classList.remove('d-none');
+                        registerSpinner.classList.add('d-none');
+                        registerBtn.disabled = false;
+                        
+                        console.error("Registration failed:", error.message);
+                        showAlert(error.message || 'حدث خطأ أثناء إنشاء الحساب');
+                    });
+            }, 500);
+        }
+        
+        function saveProfile() {
+            const name = document.getElementById('profileName').value;
+            const phone = document.getElementById('profilePhone').value;
+            const address = document.getElementById('profileAddress').value;
+            
+            const profileData = {
+                name: name,
+                phone: phone,
+                address: address
+            };
+            
+            updateUserProfile(profileData)
+                .then(() => {
+                    showAlert('تم حفظ التغييرات بنجاح', 'success');
+                })
+                .catch((error) => {
+                    console.error("Error saving profile:", error);
+                    showAlert('حدث خطأ أثناء حفظ التغييرات');
+                });
+        }
+        
+        function showSubscriptionPage() {
+            if (!currentUser || !userData) return showLoginPage();
+            
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="pb-5">
+                    <!-- شريط التنقل العلوي -->
+                    <nav class="navbar navbar-light bg-white shadow-sm">
+                        <div class="container-fluid">
+                            <button class="btn btn-outline-primary" onclick="showDashboard()">
+                                <i class="fas fa-arrow-right me-2"></i>العودة
+                            </button>
+                            <span class="navbar-brand fw-bold text-primary">إدارة الاشتراك</span>
+                        </div>
+                    </nav>
+                    
+                    <div class="container mt-4">
+                        <!-- حالة الاشتراك الحالية -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="subscription-card">
+                                    <h3 class="fw-bold mb-4">اشتراكك الحالي</h3>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <p class="fw-bold"><i class="fas fa-calendar-start me-2"></i>تاريخ البدء:</p>
+                                            <h5>${userData.subscription?.startDate ? new Date(userData.subscription.startDate).toLocaleDateString('ar-AR') : 'غير محدد'}</h5>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="fw-bold"><i class="fas fa-calendar-times me-2"></i>تاريخ الانتهاء:</p>
+                                            <h5>${userData.subscription?.endDate ? new Date(userData.subscription.endDate).toLocaleDateString('ar-AR') : 'غير محدد'}</h5>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <p class="fw-bold"><i class="fas fa-clock me-2"></i>الأيام المتبقية:</p>
+                                        <div class="countdown-timer">${userData.subscription?.daysRemaining || 0} يوم</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <p class="fw-bold"><i class="fas fa-crown me-2"></i>نوع الاشتراك:</p>
+                                        <h3 class="fw-bold">${userData.subscription?.status === 'premium' ? 'اشتراك مميز' : 'اشتراك مجاني'}</h3>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <p class="fw-bold"><i class="fas fa-sync-alt me-2"></i>التجديد التلقائي:</p>
+                                        <h5>${userData.subscription?.autoRenew ? 'مفعل' : 'معطل'}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- خطط الاشتراك -->
+                        <h5 class="section-title fw-bold mt-5 mb-4">خطط الاشتراك</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-0 shadow-soft h-100">
+                                    <div class="card-body text-center p-4">
+                                        <h5 class="card-title text-muted fw-bold">الاشتراك المجاني</h5>
+                                        <h2 class="fw-bold my-4">مجاناً</h2>
+                                        <ul class="list-unstyled text-start mb-4">
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>الوصول الأساسي</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>مميزات محدودة</li>
+                                            <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>دعم فني محدود</li>
+                                            <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>إعلانات</li>
+                                        </ul>
+                                        <button class="btn btn-outline-primary w-100 mt-3" ${userData.subscription?.status === 'free' ? 'disabled' : ''}>
+                                            ${userData.subscription?.status === 'free' ? 'مفعل حالياً' : 'غير متاح'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-primary border-2 shadow-soft h-100">
+                                    <div class="card-body text-center p-4 position-relative">
+                                        <span class="position-absolute top-0 start-50 translate-middle badge bg-primary">
+                                            الأكثر شيوعاً
+                                        </span>
+                                        <h5 class="card-title text-primary fw-bold">الاشتراك الشهري</h5>
+                                        <h2 class="fw-bold my-4">$9.99 <small class="text-muted">/شهر</small></h2>
+                                        <ul class="list-unstyled text-start mb-4">
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>جميع المميزات</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>دعم فني 24/7</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>بدون إعلانات</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>تحديثات دورية</li>
+                                        </ul>
+                                        <button class="btn btn-primary w-100 mt-3 fw-bold" onclick="renewSubscription('monthly')">
+                                            ${userData.subscription?.status === 'premium' ? 'تجديد الاشتراك' : 'ترقية الآن'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-0 shadow-soft h-100">
+                                    <div class="card-body text-center p-4">
+                                        <h5 class="card-title text-warning fw-bold">الاشتراك السنوي</h5>
+                                        <h2 class="fw-bold my-4">$99.99 <small class="text-muted">/سنة</small></h2>
+                                        <div class="badge bg-success mb-3 fw-bold">وفر 16%</div>
+                                        <ul class="list-unstyled text-start mb-4">
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>جميع المميزات</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>دعم فني متميز</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>خصومات حصرية</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>أولوية في الخدمة</li>
+                                        </ul>
+                                        <button class="btn btn-warning w-100 mt-3 fw-bold" onclick="renewSubscription('yearly')">
+                                            ${userData.subscription?.status === 'premium' ? 'ترقية' : 'اشتراك سنوي'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- القائمة السفلية -->
+                    <div class="bottom-nav">
+                        <div class="container">
+                            <div class="row justify-content-around text-center">
+                                <div class="col">
+                                    <a href="#" onclick="showDashboard()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-home"></i>
+                                            <div class="nav-text">الرئيسية</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showProfilePage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-user"></i>
+                                            <div class="nav-text">الملف</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showNotificationsPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-bell"></i>
+                                            <div class="nav-text">الإشعارات</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showSearchPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-search"></i>
+                                            <div class="nav-text">بحث</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showMenuPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-bars"></i>
+                                            <div class="nav-text">القائمة</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            hideLoadingScreen();
+        }
+        
+        function renewSubscription(plan) {
+            const subscriptionData = {
+                status: 'premium',
+                plan: plan === 'monthly' ? 'monthly' : 'yearly',
+                startDate: new Date().toISOString(),
+                endDate: plan === 'monthly' 
+                    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                    : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                daysRemaining: plan === 'monthly' ? 30 : 365,
+                autoRenew: true
+            };
+            
+            updateSubscription(subscriptionData)
+                .then(() => {
+                    showAlert('تم تجديد الاشتراك بنجاح!', 'success');
+                    showDashboard();
+                })
+                .catch((error) => {
+                    console.error("Error renewing subscription:", error);
+                    showAlert('حدث خطأ أثناء تجديد الاشتراك');
+                });
+        }
+        
+        function changeAvatar() {
+            showAlert('ميزة تغيير الصورة قيد التطوير', 'info');
+        }
+        
+        function showNotificationsPage() {
+            showAlert('صفحة الإشعارات قيد التطوير', 'info');
+        }
+        
+        function showSearchPage() {
+            showAlert('صفحة البحث قيد التطوير', 'info');
+        }
+        
+        function showSettingsPage() {
+            showAlert('صفحة الإعدادات قيد التطوير', 'info');
+        }
+        
+        function showHelpPage() {
+            showAlert('صفحة المساعدة قيد التطوير', 'info');
+        }
+        
+        function showMenuPage() {
+            if (!currentUser || !userData) return showLoginPage();
+            
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="pb-5">
+                    <!-- شريط التنقل العلوي -->
+                    <nav class="navbar navbar-light bg-white shadow-sm">
+                        <div class="container-fluid">
+                            <button class="btn btn-outline-primary" onclick="showDashboard()">
+                                <i class="fas fa-arrow-right me-2"></i>العودة
+                            </button>
+                            <span class="navbar-brand fw-bold text-primary">القائمة الرئيسية</span>
+                        </div>
+                    </nav>
+                    
+                    <div class="container mt-4">
+                        <!-- القائمة الرئيسية -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="profile-card">
+                                    <!-- حسابي -->
+                                    <div class="menu-item" onclick="showProfilePage()">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                                                <i class="fas fa-user text-primary fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 fw-bold">حسابي</h6>
+                                                <p class="text-muted mb-0">إدارة الملف الشخصي والإعدادات</p>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <i class="fas fa-chevron-left text-muted"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- الاشتراكات -->
+                                    <div class="menu-item" onclick="showSubscriptionPage()">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+                                                <i class="fas fa-crown text-success fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 fw-bold">الاشتراكات</h6>
+                                                <p class="text-muted mb-0">إدارة وتجديد الاشتراكات</p>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <i class="fas fa-chevron-left text-muted"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- الإشعارات -->
+                                    <div class="menu-item" onclick="showNotificationsPage()">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-3">
+                                                <i class="fas fa-bell text-warning fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 fw-bold">الإشعارات</h6>
+                                                <p class="text-muted mb-0">عرض الإشعارات والتنبيهات</p>
+                                            </div>
+                                            <div class="ms-auto position-relative">
+                                                <span class="badge bg-primary rounded-circle p-1">3</span>
+                                                <i class="fas fa-chevron-left text-muted"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- تسجيل الخروج -->
+                                    <div class="menu-item" onclick="logoutUser()">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-danger bg-opacity-10 p-3 rounded-circle me-3">
+                                                <i class="fas fa-sign-out-alt text-danger fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 fw-bold text-danger">تسجيل الخروج</h6>
+                                                <p class="text-muted mb-0">إنهاء الجلسة الحالية</p>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <i class="fas fa-chevron-left text-muted"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- القائمة السفلية -->
+                    <div class="bottom-nav">
+                        <div class="container">
+                            <div class="row justify-content-around text-center">
+                                <div class="col">
+                                    <a href="#" onclick="showDashboard()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-home"></i>
+                                            <div class="nav-text">الرئيسية</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showProfilePage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-user"></i>
+                                            <div class="nav-text">الملف</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showNotificationsPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-bell"></i>
+                                            <div class="nav-text">الإشعارات</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showSearchPage()" class="text-decoration-none">
+                                        <div class="nav-icon">
+                                            <i class="fas fa-search"></i>
+                                            <div class="nav-text">بحث</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col">
+                                    <a href="#" onclick="showMenuPage()" class="text-decoration-none">
+                                        <div class="nav-icon active">
+                                            <i class="fas fa-bars"></i>
+                                            <div class="nav-text">القائمة</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            hideLoadingScreen();
+        }
+        
+        function hideLoadingScreen() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+        
+        // ============================================
+        // تهيئة التطبيق
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("App initialized with Firebase Realtime Database, checking auth state...");
+            
+            // التحقق من وجود مستخدم مسجل الدخول
+            checkAuthState();
+            
+            setTimeout(() => {
+                if (document.getElementById('loadingScreen').style.display !== 'none') {
+                    console.log("Loading timeout, showing login page");
+                    hideLoadingScreen();
+                    showLoginPage();
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
